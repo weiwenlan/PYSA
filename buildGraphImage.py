@@ -150,7 +150,7 @@ def findinclude(line):
         return ""
     
 
-def writeedges(code, way):
+def write_into_all_edges(code, way):
     filename=way+ '/' + code
     f = open(filename)
     code = os.path.splitext(code)[-2]
@@ -225,7 +225,7 @@ def writeGraph(code, way, vertexes, edges):
         included = findinclude(line)
         if (included != ""):
             for i in included:
-                print(i,code)
+                
                 writedges(i,code,vertexes, edges)
     f.close()
 
@@ -251,7 +251,7 @@ def walkfilesfirst(file):
     for path,dir_list,file_list in g:  
         for file_name in file_list:
             if isCode(file_name):
-                writeedges(file_name,path)
+                write_into_all_edges(file_name,path)
 
 
 def walk_communities(vertexes,res):
@@ -388,7 +388,7 @@ def cross_Multi_files(adress, way, totems,vertexes,edges):
     file_hie[totems]=file_tmp
 
 
-def walkfiles_cross_files(adress, way):
+def walkfiles_cross_files(adress, way, vertexes, edges):
     '''
     count calls among files and conclude them on the folder node
     '''
@@ -398,13 +398,17 @@ def walkfiles_cross_files(adress, way):
 
 
     for obj in cat:
+        
         if (os.path.isdir(way+"/" + obj)):
-            walkfiles_cross_files(obj, way)
+            walkfiles_cross_files(obj, way, vertexes, edges)
             
         else:
             if skip(obj):
                 continue
             if (isCode(obj)):
+                
+                obj_t=os.path.splitext(obj)[-2]
+                writeGraph(obj, way, vertexes, edges)
                 writeGraph_cross_files(obj, way)
   
 
@@ -538,7 +542,7 @@ def initialize_graph(ori,**params):
 
     if show_important_edge:
         show_important_edge_func()
-        #print(important_edge)
+
     
     if params['community']:
         res=GI.find_community(G)
@@ -671,7 +675,11 @@ def initialize_File_graph(ori,**params):
         for j in list(file_hie.keys()):
             if file_edges[i][j]!=0:
                 G.add_edge(i,j)
-                
+    
+    if len(file_hie.keys())==1:                                                                  
+        for i in list(file_hie.keys()):                                                             
+            G.add_node(i)
+
 
     find_top_node(params['file_num'],False)
     global sorted_vertex
@@ -763,7 +771,7 @@ def initialize_Multi_graph(ori,**params):
     vertexes.write("node [style=\"filled\", " +
                     "fillcolor=\"" + getColor("base_color") + "\"];\n")
     vertexes.write('node [style="filled", shape="folder", color="#dfe0df", bgcolor="#dfe0df"];\n')
-
+    
     """
     initiate file path
     """
@@ -782,7 +790,7 @@ def initialize_Multi_graph(ori,**params):
     '''
     buildGraph()
     top_node=find_top_node(int(params['file_num']),params['cluster'])
-
+    
 
 
     '''
@@ -797,7 +805,15 @@ def initialize_Multi_graph(ori,**params):
             del file_hie[i]
             continue
 
+    
+    for i in list(file_hie.keys()):
+        tmp={}
+        for j in list(file_hie.keys()):
+            
+            tmp[j]=0
+        file_edges[i]=tmp
 
+    walkfiles_cross_files(srcname, src, vertexes, edges)
 
 
 
@@ -805,7 +821,7 @@ def initialize_Multi_graph(ori,**params):
     this shows the important calls cross modules by using --Folder_calls
     '''
     if params['Folder_calls']:  
-        global file_edges
+        
         for i in list(file_hie.keys()):
             tmp={}
             for j in list(file_hie.keys()):
