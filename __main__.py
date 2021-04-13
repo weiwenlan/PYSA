@@ -49,7 +49,8 @@ def main(cli_args=None):
     if known_args.module:
          initialize_File_graph(os.path.abspath(unknown_args[0]),all=known_args.all,
                     module=known_args.module,func=known_args.func,
-                    twopie=known_args.twopie, output=known_args.output,no_edges=known_args.no_edges)
+                    twopie=known_args.twopie, output=known_args.output,no_edges=known_args.no_edges,
+                    file_num=known_args.file_num)
     elif known_args.multi:
         initialize_Multi_graph(os.path.abspath(unknown_args[0]),all=known_args.all,
                     module=known_args.module,func=known_args.func,

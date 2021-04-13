@@ -14,6 +14,7 @@ file_hie={}
 file_edges={}
 all_files=[]
 all_edges=[]
+all_files_hie=[]
 sorted_vertex={}
 file_hie={}
 important_edge=[]
@@ -58,10 +59,10 @@ fixedColors = {".sh" : "cyan",
 # trapezium, parallelogram, house, pentagon, hexagon, septagon, octagon, doublecircle,
 # doubleoctagon, tripleoctagon, invtriangle, invtrapezium, invhouse, Mdiamond, Msquare,
 # Mcircle, rect, rectangle, square, star, none
-fixedShapes = {".sh" : "\"oval\"",
+fixedShapes = {".sh" : "\"box\"",
                ".py" : "\"rectangle\"",
                ".ipynb" : "\"rectangle\"",
-               ".md" : "\"oval\"",
+               ".md" : "\"box\"",
                }
 
 def randomizeColor():
@@ -182,7 +183,7 @@ def writedges(getfrom,getto,vertexes, edges):
             edges.write("\"" + getto+ "\" ")
             edges.write("};\n")
 
-def writedges_cross_files(getfrom,getto,adress):
+def writedges_cross_files(getfrom,getto):
     same_hie=False
     target_hie=None
     source_hie=None
@@ -202,7 +203,7 @@ def writedges_cross_files(getfrom,getto,adress):
         file_edges[str(source_hie)][str(target_hie)]+=1
 
 
-def writeGraph_cross_files(code, way, adress,vertexes,edges):
+def writeGraph_cross_files(code, way):
     filename=way+ '/' + code
     f = open(filename)
     
@@ -212,7 +213,7 @@ def writeGraph_cross_files(code, way, adress,vertexes,edges):
         if (included != ""):
             for i in included:
                 
-                writedges_cross_files(i,code,adress)
+                writedges_cross_files(i,code)
     f.close()
 
 def writeGraph(code, way, vertexes, edges):
@@ -224,6 +225,7 @@ def writeGraph(code, way, vertexes, edges):
         included = findinclude(line)
         if (included != ""):
             for i in included:
+                print(i,code)
                 writedges(i,code,vertexes, edges)
     f.close()
 
@@ -235,8 +237,10 @@ def skip(name):
 
 
 
-# 直接将函数之间互相调用的关系弄出来了
 def walkfilesfirst(file):
+    '''
+    walk among all files and get all names
+    '''
     g = os.walk(file)  
     for path,dir_list,file_list in g:  
         for file_name in file_list:  
@@ -325,7 +329,11 @@ def walkFiles(adress, way, vertexes, edges):
     vertexes.write("}\n")
 
 def cross_files(adress, way, totems):
-    
+    '''
+    generate the file tree and save as a dic {a:{b,c,d},{},{{}}}
+    save in file_hie
+
+    '''
     file_tmp=[]
     way = way + "/" + adress
     cat = os.listdir(way)
@@ -349,18 +357,19 @@ def cross_files(adress, way, totems):
 
 
 def cross_Multi_files(adress, way, totems,vertexes,edges):
-    
+    jumped=['.git','.github','__pycache__']
     file_tmp=[]
     way = way + "/" + adress
     cat = os.listdir(way)
     for obj in cat:
         
         if (os.path.isdir(way+"/" + obj)):
-            x=totems+"."+str(obj)
-            edges.write("\"" + totems + "\" -> ")
-            edges.write("\"" + x+ "\" ")
-            edges.write("[color=\"#dfe0de\"];\n")
-            cross_Multi_files(obj, way,x,vertexes,edges)
+            if str(obj) not in jumped:
+                x=totems+"."+str(obj)
+                edges.write("\"" + totems + "\" -> ")
+                edges.write("\"" + x+ "\" ")
+                edges.write("[color=\"#dfe0de\"];\n")
+                cross_Multi_files(obj, way,x,vertexes,edges)
         else:
             if skip(obj):
                 continue
@@ -379,25 +388,24 @@ def cross_Multi_files(adress, way, totems,vertexes,edges):
     file_hie[totems]=file_tmp
 
 
-def walkfiles_cross_files(adress, way, vertexes, edges):
+def walkfiles_cross_files(adress, way):
+    '''
+    count calls among files and conclude them on the folder node
+    '''
 
     way = way + "/" + adress
     cat = os.listdir(way)
 
 
     for obj in cat:
-        
         if (os.path.isdir(way+"/" + obj)):
-            walkfiles_cross_files(obj, way, vertexes, edges)
+            walkfiles_cross_files(obj, way)
             
         else:
             if skip(obj):
                 continue
             if (isCode(obj)):
-                
-                obj_t=os.path.splitext(obj)[-2]
-                writeGraph(obj, way, vertexes, edges)
-                writeGraph_cross_files(obj, way,adress,vertexes,edges)
+                writeGraph_cross_files(obj, way)
   
 
 def buildGraph():
@@ -612,16 +620,25 @@ def initialize_File_graph(ori,**params):
     vertexes.write("node [style=\"filled\", " +
                     "fillcolor=\"" + getColor("base_color") + "\"];\n")
 
-    # path of file
-    # ori='/Users/wwl/Downloads/graph_Of_Included-master/YOLOv5master/aiohttpmaster'
+
+    """
+    initiate file path
+    """
     ori = ori
     srcname=ori.split('/')[-1]
     src=ori.replace('/'+srcname,'')
 
+    """
+    walk file to draw the inner connection
+    """
     walkfilesfirst(src+'/'+srcname)
-    #top_node=find_top_node()
-
     cross_files(srcname,src,srcname)
+
+
+    """
+    file_hie{xxx:{xxx:234}} contains the num 
+    of connections between different files
+    """
     global file_hie
     for i in list(file_hie.keys()):
         if file_hie[i]==[]:
@@ -636,32 +653,50 @@ def initialize_File_graph(ori,**params):
             tmp[j]=0
         file_edges[i]=tmp
 
-    walkfiles_cross_files(srcname, src, vertexes, edges)
+    '''
+    count the num of calls
+    '''
+
+
+    walkfiles_cross_files(srcname, src)
     
-    
 
-
-    for key in list(file_hie.keys()):
-        vertexes.write('node [style="filled", shape="box", color="#dfe0df", bgcolor="#dfe0df"];\n')
-        vertexes.write(' \"'+str(key)+"\";\n")
-
+    """
+    build Graph and use pagerank 
+    """
+    global G
+    G = nx.DiGraph()
 
     for i in list(file_hie.keys()):
         for j in list(file_hie.keys()):
             if file_edges[i][j]!=0:
-                num = file_edges[i][j]
-                if num>10:
-                    num = math.log2(num)
-                
-                if num<=1:
-                    num=1
-                num = int(num)
-                edges.write("\"" + str(i) + "\" -> ")
-                edges.write("\"" + str(j)+ "\" ")
-                edges.write("[penwidth="+str(num)+ 'color = "#dfe0df"'+"];\n")
+                G.add_edge(i,j)
                 
 
+    find_top_node(params['file_num'],False)
+    global sorted_vertex
 
+    for i in list(file_hie.keys()):
+        if i in sorted_vertex:
+            for j in list(file_hie.keys()):
+                if j in sorted_vertex:
+                    if file_edges[i][j]!=0:
+                        num = file_edges[i][j]
+                        if num>10:
+                            num = math.log2(num)
+                        
+                        if num<=1:
+                            num=1
+                        num = int(num)
+                        edges.write("\"" + str(i) + "\" -> ")
+                        edges.write("\"" + str(j)+ "\" ")
+                        edges.write("[penwidth="+str(num)+ 'color = "#dfe0df"'+"];\n")
+                        
+
+
+    for key in sorted_vertex:
+        vertexes.write('node [style="filled", shape="folder", color="#dfe0df", bgcolor="#dfe0df"];\n')
+        vertexes.write(' \"'+str(key)+"\";\n")
     
     vertexes.close()
     edges.close()
@@ -727,43 +762,59 @@ def initialize_Multi_graph(ori,**params):
     vertexes.write("edge[arrowtail=none,style=tapered,penwidth=4,arrowhead=none,dir=forward,color=\"#a3d2ca\"];\n")
     vertexes.write("node [style=\"filled\", " +
                     "fillcolor=\"" + getColor("base_color") + "\"];\n")
+    vertexes.write('node [style="filled", shape="folder", color="#dfe0df", bgcolor="#dfe0df"];\n')
 
-    # path of file
-    # ori='/Users/wwl/Downloads/graph_Of_Included-master/YOLOv5master/aiohttpmaster'
+    """
+    initiate file path
+    """
     ori = ori
     srcname=ori.split('/')[-1]
     src=ori.replace('/'+srcname,'')
 
+    '''
+    walk file to generate all file names
+    '''
     walkfilesfirst(src+'/'+srcname)
-    #top_node=find_top_node()
+
+
+    '''
+    build Graph of the files 
+    '''
     buildGraph()
     top_node=find_top_node(int(params['file_num']),params['cluster'])
 
+
+
+    '''
+    build Graph of all Folders 
+    '''
+
     cross_Multi_files(srcname,src,srcname,vertexes,edges)
+
     global file_hie
     for i in list(file_hie.keys()):
         if file_hie[i]==[]:
             del file_hie[i]
             continue
-    
-    global file_edges
-    for i in list(file_hie.keys()):
-        tmp={}
-        for j in list(file_hie.keys()):
-            
-            tmp[j]=0
-        file_edges[i]=tmp
-
-    walkfiles_cross_files(srcname, src, vertexes, edges)
-    
-    
 
 
-    for key in list(file_hie.keys()):
-        vertexes.write('node [style="filled", shape="box", color="#dfe0df", bgcolor="#dfe0df"];\n')
-        vertexes.write(' \"'+str(key)+"\";\n")
 
-    if params['Folder_calls']:
+
+
+    '''
+    this shows the important calls cross modules by using --Folder_calls
+    '''
+    if params['Folder_calls']:  
+        global file_edges
+        for i in list(file_hie.keys()):
+            tmp={}
+            for j in list(file_hie.keys()):
+                
+                tmp[j]=0
+            file_edges[i]=tmp
+
+        walkfiles_cross_files(srcname, src)
+
         for i in list(file_hie.keys()):
             for j in list(file_hie.keys()):
                 if file_edges[i][j]!=0:

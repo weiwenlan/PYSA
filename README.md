@@ -1,5 +1,16 @@
 # PYSA
 python module and files analysis with Graphviz
+
+
+
+## dependencies
+```
+networkx
+jinjia2
+graphviz
+```
+
+
 ### 目前封装成可以通过命令行调用的包的形式
 
 该包通过展示文件和文件夹的调用关系以获得深入的探索视角，暂时可选的各项如下。
