@@ -1,19 +1,25 @@
 # PYSA
+
 python module and files analysis with Graphviz
 
 
 
-## dependencies
+# Demo
+
+Visit https://weiwenlan.github.io/code-graph-test/
+
+
+
+## Dependencies
+
 ```
 networkx
 jinjia2
+glob
 graphviz
 ```
 
-
-### 目前封装成可以通过命令行调用的包的形式
-
-该包通过展示文件和文件夹的调用关系以获得深入的探索视角，暂时可选的各项如下。
+This module have multiple options as below
 
 ```python
 optional arguments:
@@ -25,101 +31,127 @@ optional arguments:
   --output OUTPUT      output filename default:call_graph
   --file_num FILE_NUM  output files number
   --no_edges           output without edges
-  --cluster            use cluster edges
+  --cluster            use cluster algorithm
+  --community          use community algorithm
+  --multi              use both module and file algorithm
+  --Folder_calls       Show edges between Folder
 ```
 
-下面根据每个选项展示实现效果
+Some examples are shown below.
 
-## 依赖库
+# Legend
+
+![legend](img/legend.png)
+
+# No options
 
 ```python
-glob
-os
-re
-random
-**graphviz
-networkx 
-math**
+python pysa YOLOv5master 
 ```
 
-# —all全文件分析
+this cmd let pysa dealing with the yolov5 files and generate the call graph. The bigger rectangle means the affiliation. 
 
-展示全文件之间的调用关系
+![image1](img/image1.png)
+
+# — multi [mix analysis]
+
+Multi call graph will provide the call graph both in file calls and module calls. This graph contains two parts, the grey folders stand for the folders and the colorful squares stand for file calls. See more in legend.
 
 ```python
+python pysa aiohttpmaster --multi
+```
+
+![image2](img/image2.png)
+
+# —all [show all files]
+
+Show all files in the call graph. **NOT RECOMMENDED** graph could be so complicated.
+
+```bash
 python pysa YOLOv5master  --all
 ```
 
-![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/1e87f6b0-6be3-43fa-aa3b-4395bcd9ad07/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/1e87f6b0-6be3-43fa-aa3b-4395bcd9ad07/Untitled.png)
 
-# —module全文件夹分析
 
-展示所有文件夹之间由内部文件组成的调用关系，该指向箭头越粗表示调用关系越强烈
+# —module [show all modules]
 
-```python
-python pysa YOLOv5master  --module
+Show call relations between modules, the closer the relation, the wider the pen width.
+
+```bash
+python pysa tornado --module
 ```
 
-![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/84d671c1-5df9-445f-927b-7757cec2db17/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/84d671c1-5df9-445f-927b-7757cec2db17/Untitled.png)
+![image3](img/image3.png)
 
-# —twopie引擎生成图
+# —twopie
 
-该选项可以与任意其他选项一起使用，生成图将为放射图样，但原有的分组关系将被破坏
+Use with any options, this will generate a image using twopi (default is dot)
 
 ```python
 python pysa YOLOv5master  --all --twopie
 ```
 
-![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/cc8498f1-eebd-43c7-9217-11e220e2386c/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/cc8498f1-eebd-43c7-9217-11e220e2386c/Untitled.png)
+![image4](img/image4.png)
 
-# —func选项
+# —func [use with default]
 
-该选项可以与任意其他选项一起使用，生成图中加入调用的方法图（仅与被调用最高的文件有关的函数）
+this will generate some of the nodes from PYAN
 
 ```python
 python pysa YOLOv5master  --func
 ```
 
-![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/c889795a-f0f3-490b-8cb7-93d93cff6f6c/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/c889795a-f0f3-490b-8cb7-93d93cff6f6c/Untitled.png)
 
-# —output选项
 
-规定名字，默认为call_graph.dot
+# —output
 
-# —file_num 选项
+Setting the output name default is call_graph.dot
 
-该选项可以规定默认精选的文件的数量，默认为20个，小于该值会直接展示所有的文件。
+# —file_num 
+
+Setting the number of files , this decided the number of files showed, these files are chosen by the algorithm, the default setting is **20**。
 
 ```python
 python pysa tornado  --file_num 30
 ```
 
-![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/c173102b-03e1-40d1-82b8-7f35bd2bf7dd/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/c173102b-03e1-40d1-82b8-7f35bd2bf7dd/Untitled.png)
+![image5](img/image5.png)
 
 ```python
 python pysa tornado 
 ```
 
-![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/3d29a955-eb76-47f7-807b-cce4b90c513a/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/3d29a955-eb76-47f7-807b-cce4b90c513a/Untitled.png)
+![image6](img/image6.png)
 
-# —no_edges
+# —no_edges [used with any options]
 
-该选项直接禁用所有的边输出
+Under this setting, only nodes will be shown.
 
 ```python
 python pysa tornado --no_edges
 ```
 
-![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/cbdeb3df-931d-4088-b455-189e4a50be67/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/cbdeb3df-931d-4088-b455-189e4a50be67/Untitled.png)
+![image7](img/image7.png)
 
-# —cluster聚类分析
+# —cluster [used with file calls]
 
-该选项使用聚类算法，展示的精选文件将首要展示聚类指数较大的
+This option uses cluster algorithm and show the files with high cluster index.
 
 ```python
-python pysa tornado --cluster --file_num 40
+python pysa aiohttpmaster --cluster 
 ```
 
-![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/5dc8b189-d215-41c0-9336-3978fed3e7fa/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/5dc8b189-d215-41c0-9336-3978fed3e7fa/Untitled.png)
+![image8](img/image8.png)
 
-这里展示的没有edge主要是由于，聚类指数较高的文件都是相对独立的调用了很多其他文件，所以极有可能互相没有任何调用，tornado代码中有超过400个文件，很有可能选出20个没有任何相对调用关系的函数。
+# —community [used with file calls]
+
+This option uses community algorithm and show all files in the community way.
+
+```bash
+ python pysa aiohttpmaster --community
+```
+
+
+
+![image9](img/image9.png)
+
