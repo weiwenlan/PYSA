@@ -662,7 +662,7 @@ def initialize_File_graph(ori,**params):
     '''
 
 
-    walkfiles_cross_files(srcname, src)
+    walkfiles_cross_files(srcname, src, vertexes, edges)
     
 
     """
@@ -821,16 +821,6 @@ def initialize_Multi_graph(ori,**params):
     this shows the important calls cross modules by using --Folder_calls
     '''
     if params['Folder_calls']:  
-        
-        for i in list(file_hie.keys()):
-            tmp={}
-            for j in list(file_hie.keys()):
-                
-                tmp[j]=0
-            file_edges[i]=tmp
-
-        walkfiles_cross_files(srcname, src)
-
         for i in list(file_hie.keys()):
             for j in list(file_hie.keys()):
                 if file_edges[i][j]!=0:
